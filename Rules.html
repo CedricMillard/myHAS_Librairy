@@ -1,0 +1,395 @@
+
+<!DOCTYPE HTML><html>
+
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 8px;
+  vertical-align:middle;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 23px;
+  width: 23px;
+  left: 5px;
+  bottom: 5px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 17px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+em {
+font-size:24px;
+font-style: normal;
+vertical-align:middle;
+}
+
+</style>
+</head>
+
+<body>
+<style>
+input, select, textarea{
+  //width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+/* Style the label to display next to the inputs */
+label {
+  padding: 12px 12px 12px 0;
+  vertical-align: middle;
+  display: inline-block;
+  font-size: 18px;
+}
+
+/* Hide default HTML checkbox */
+input[type=checkbox], input[type=radio] {
+
+  width: 20px;
+  height: 20px;
+}
+</style>
+<script>
+var nbRule = 2;
+
+//Update to handle several rules => generate 1 string
+function sendForm() {
+  updateFreq();
+  document.getElementById("NbRule").value = nbRule;
+  for(i=0; i<=nbRule; i++)
+  {
+    document.getElementById("rule"+i).disabled = (i?false:true);
+    document.getElementById("variable"+i).disabled = true;
+    document.getElementById("operator"+i).disabled = true;
+    if(document.getElementById("time"+i).value != "")
+      document.getElementById("time"+i).disabled = true;
+    if(document.getElementById("temp"+i).value != "")
+      document.getElementById("temp"+i).disabled = true;
+    document.getElementById("Active"+i).disabled = true;
+    document.getElementById("turnON"+i).disabled = (i?false:true);
+    document.getElementById("turnOFF"+i).disabled = (i?false:true);
+  }
+  x.submit();
+}
+
+function activateRule(index = -1)
+{
+  var isActive = false;
+  if(index==-1 && typeof event != "undefined")
+  {
+    var root = event.target.id;
+    index = root.slice(-1);
+  }
+  if(document.getElementById("Active"+index).checked) isActive = true;
+
+  for (const element of document.getElementById("myFormDiv"+index).getElementsByTagName("input"))
+  {
+    if(typeof element.type != "undefined")
+      if(element.type != "button" && element.type != "hidden" && element.type != "text" && element.id!="Active"+index)
+        element.disabled= !isActive;
+  }
+
+  for (const element of document.getElementById("myFormDiv"+index).getElementsByTagName("select"))
+  {
+    element.disabled= !isActive;
+  }
+
+  document.getElementById("status"+index).value= (isActive?"active":"disabled");
+
+}
+
+function updateRule()
+{
+  var index = 1;
+  if(typeof event != "undefined")
+  {
+    var root = event.target.id;
+    index = root.slice(-1);
+  }
+  var sRule;
+  var valField;
+  sRule = document.getElementById("variable"+index).value;
+  if(sRule=="H")
+  {
+    document.getElementById("eq"+index).disabled = false;
+    document.getElementById("inf"+index).disabled = true;
+    document.getElementById("sup"+index).disabled = true;
+    document.getElementById("time"+index).type = "time";
+    document.getElementById("temp"+index).type = "hidden";
+    document.getElementById("tempLabel"+index).style.display = "none";
+    if(document.getElementById("operator"+index).value != "eq") document.getElementById("operator"+index).value = "eq";
+    valField = "time"+index;
+  }
+  else
+  {
+    document.getElementById("eq"+index).disabled = true;
+    document.getElementById("inf"+index).disabled = false;
+    document.getElementById("sup"+index).disabled = false;
+    document.getElementById("time"+index).type = "hidden";
+    document.getElementById("temp"+index).type = "number";
+    document.getElementById("tempLabel"+index).style.display = "inline";
+    if(document.getElementById("operator"+index).value == "eq") document.getElementById("operator"+index).value = "inf";
+    valField = "temp"+index;
+  }
+  switch(document.getElementById("operator"+index).value)
+  {
+    case "eq": sRule += "="; break;
+    case "inf": sRule += "<"; break;
+    case "sup": sRule += ">"; break;
+  }
+
+  var targetVal = document.getElementById(valField).value;
+  if(valField.indexOf("time")>=0)
+  {
+    var sTime = document.getElementById(valField).value;
+    var dot = sTime.search(":");
+    var hh = parseInt(sTime.substring(0, dot));
+    var min = parseInt(sTime.substring(dot+1));
+    targetVal = hh*3600+min*60;
+  }
+  sRule+=targetVal;
+  //alert("rule"+index+" "+sRule);
+  document.getElementById("rule"+index).value = sRule;
+}
+
+function deleteRule()
+{
+  var index = 0;
+  if(typeof event != "undefined")
+  {
+    var root = event.target.id;
+    index = root.slice(-1);
+  }
+  if(index>0)
+  {
+    document.getElementById("status"+index).value = "deleted";
+    document.getElementById("myFormDiv"+index).style.display = "none";
+  }
+}
+
+function addRule()
+{
+  if(nbRule<9)
+  {
+    nbRule++;
+    var cln = document.getElementById('myFormDiv0').cloneNode(true);
+    //change all ids
+    for (const element of cln.getElementsByTagName("*"))
+    {
+      if(typeof element.id != "undefined")
+        element.id = element.id.substring(0,element.id.length-1) + nbRule;
+      if(typeof element.name != "undefined")
+        element.name = element.name.substring(0,element.name.length-1) + nbRule;
+      if(typeof element.for != "undefined")
+        element.for = element.for.substring(0,element.for.length-1) + nbRule;
+    }
+    cln.id = "myFormDiv"+nbRule;
+    cln.style.display = "block";
+    document.getElementById('FormR').insertBefore(cln, document.getElementById('sub'));
+  }
+}
+
+function updateFreq()
+{
+  for (i=1; i<=nbRule; i++)
+  {
+    var listCheckboxes = document.getElementById("myFormDiv"+i).getElementsByTagName("input");
+    var freqMask = 0;
+    var j;
+    for (j = 0; j < listCheckboxes.length; j++) {
+      if(listCheckboxes[j].type == "checkbox" && listCheckboxes[j].id.substring(0,listCheckboxes[j].id.length-1)!="Active")
+      {
+        if(listCheckboxes[j].checked) {
+          freqMask += parseInt(listCheckboxes[j].value);
+          listCheckboxes[j].disabled = true;
+        }
+      }
+    }
+    if(freqMask==0) freqMask = 128;
+    document.getElementById("Freq"+i).value = freqMask;
+  }
+}
+</script>
+<h1 style="font-family: 'Arial'; font-weight: bold;">My Home Automation System</h1>
+<h1 style="font-family: 'Arial Narrow';">My Home Automation System</h1>
+<h1 style="font-family: 'Arial';">My Home Automation System</h1>
+<h1 style="font-family: 'Helvetica';">My Home Automation System</h1>
+<h1 style="font-family: 'Impact';">My Home Automation System</h1>
+<form id="FormR" action="/saveRules" method="post">
+<input type="hidden" id="ID" name="ID" value=10010>
+<input type="hidden" id="NbRule" name="NbRule" value=2>
+<div id="myFormDiv0" style="display:none;">
+<label class="switch">
+  <input type="checkbox" id="Active0" onchange="activateRule()" checked>
+  <span class="slider round"></span>
+</label><em>Active</em><br>
+<input type="checkbox" id="Mon0" name="Mon0" value=2><label for="Mon0">Mon</label>
+<input type="checkbox" id="Tue0" name="Tue0" value=4><label for="Tue0">Tue</label>
+<input type="checkbox" id="Wed0" name="Wed0" value=8><label for="Wed0">Wed</label>
+<input type="checkbox" id="Thu0" name="Thu0" value=16><label for="Thu0">Thu</label>
+<input type="checkbox" id="Fri0" name="Fri0" value=32><label for="Fri0">Fri</label>
+<input type="checkbox" id="Sat0" name="Sat0" value=64><label for="Sat0">Sat</label>
+<input type="checkbox" id="Sun0" name="Sun0" value=1><label for="Sun0">Sun</label>
+<input type="hidden" id="Freq0" name="Freq0" value=0>
+<br><br>
+<select id="variable0" name="variable0" onchange="updateRule()" value="H">
+  <option value="H">H</option>
+  <option value="Te">TempExt</option>
+<!--  <option value="Tm">TempMorning</option>-->
+</select>
+<select id="operator0" name="operator0" onchange="updateRule()">
+  <option id="eq0" value="eq" >=</option>
+  <option id="inf0" value="inf">&lt;</option>
+  <option id="sup0" value="sup">&gt;</option>
+</select>
+<input type="time" id="time0" name="time0" onchange="updateRule()" value="08:00">
+<input type="hidden" id="temp0" name="temp0" min="-20" max="40" onchange="updateRule()"><label id="tempLabel0" for="temp0" style="display:none;">&deg;C</label><br>
+<label for="rule0">Rule: </label><input type="text" id="rule0" name="rule0" value="H=28800" disabled>
+<br><br>
+<label>Action :</label><br>
+<input type="radio" id="turnON0" name="action0" value="turnON" checked><label for="turnON0">turn ON</label><br>
+<input type="radio" id="turnOFF0" name="action0" value="turnOFF"><label for="turnOFF0">turn OFF</label><br>
+<br>
+<input type="hidden" id="status0" name="status0" value="active">
+<input type="button" id="delete0" value="Delete Rule" onclick="deleteRule()">
+<br><hr><br>
+</div>
+<div id="myFormDiv1">
+<label class="switch">
+  <input type="checkbox" id="Active1" onchange="activateRule()" >
+  <span class="slider round"></span>
+</label><em>Active</em><br>
+<div style="display:block;">
+<input type="checkbox" id="Mon1" name="Mon1" value=2 ><label for="Mon1">Mon</label>
+<input type="checkbox" id="Tue1" name="Tue1" value=4 ><label for="Tue1">Tue</label>
+<input type="checkbox" id="Wed1" name="Wed1" value=8 ><label for="Wed1">Wed</label>
+<input type="checkbox" id="Thu1" name="Thu1" value=16 ><label for="Thu1">Thu</label>
+<label for="Fri1"><input type="checkbox" id="Fri1" name="Fri1" value=32 >Fri</label>
+<label for="Sat1" style:"vertical-align: top;"><input type="checkbox" id="Sat1" name="Sat1" value=64 >Sat</label>
+<label for="Sun1"><input type="checkbox" id="Sun1" name="Sun1" value=1 >Sun</label>
+</div>
+<input type="hidden" id="Freq1" name="Freq1" value=128>
+<br><br>
+<select id="variable1" name="variable1" onchange="updateRule()">
+  <option value="H" selected>H</option>
+  <option value="Te" >TempExt</option>
+<!--  <option value="Tm" >TempMorning</option>-->
+</select>
+<select id="operator1" name="operator1" onchange="updateRule()">
+  <option id="eq1" value="eq" selected>=</option>
+  <option id="inf1" value="inf" disabled>&lt;</option>
+  <option id="sup1" value="sup" disabled>&gt;</option>
+</select>
+<input type="time" id="time1" name="time1" onchange="updateRule()" value="23:09" required>
+<input type="hidden" id="temp1" name="temp1" min="-20" max="40" onchange="updateRule()" value="" required><label id="tempLabel1" for="temp1" style='display:none;'>&deg;C</label><br>
+<label for="rule1">Rule: </label><input type="text" id="rule1" name="rule1" value="H=83340" disabled>
+<br><br>
+<label>Action :</label><br>
+<input type="radio" id="turnON1" name="action1" value="turnON" checked><label for="turnON1">turn ON</label><br>
+<input type="radio" id="turnOFF1" name="action1" value="turnOFF" ><label for="turnOFF1">turn OFF</label><br>
+<label for="blink1" style="display:inline;"><input type="radio" id="blink1" name="action1" value="blink">blink</label><br>
+<br>
+<input type="hidden" id="status1" name="status1" value="disabled">
+<input type="button" id="delete1" value="Delete Rule" onclick="deleteRule()">
+<br><hr><br>
+</div>
+<div id="myFormDiv2">
+<label class="switch">
+  <input type="checkbox" id="Active2" onchange="activateRule()" >
+  <span class="slider round"></span>
+</label><em>Active</em><br>
+<input type="checkbox" id="Mon2" name="Mon2" value=2 ><label for="Mon2">Mon</label>
+<input type="checkbox" id="Tue2" name="Tue2" value=4 ><label for="Tue2">Tue</label>
+<input type="checkbox" id="Wed2" name="Wed2" value=8 ><label for="Wed2">Wed</label>
+<input type="checkbox" id="Thu2" name="Thu2" value=16 ><label for="Thu2">Thu</label>
+<input type="checkbox" id="Fri2" name="Fri2" value=32 ><label for="Fri2">Fri</label>
+<input type="checkbox" id="Sat2" name="Sat2" value=64 ><label for="Sat2">Sat</label>
+<input type="checkbox" id="Sun2" name="Sun2" value=1 ><label for="Sun2">Sun</label>
+<input type="hidden" id="Freq2" name="Freq2" value=128>
+<br><br>
+<select id="variable2" name="variable2" onchange="updateRule()">
+  <option value="H" selected>H</option>
+  <option value="Te" >TempExt</option>
+<!--  <option value="Tm" >TempMorning</option>-->
+</select>
+<select id="operator2" name="operator2" onchange="updateRule()">
+  <option id="eq2" value="eq" selected>=</option>
+  <option id="inf2" value="inf" disabled>&lt;</option>
+  <option id="sup2" value="sup" disabled>&gt;</option>
+</select>
+<input type="time" id="time2" name="time2" onchange="updateRule()" value="00:04">
+<input type="hidden" id="temp2" name="temp2" min="-20" max="40" onchange="updateRule()" value=""><label id="tempLabel2" for="temp2" style='display:none;'>&deg;C</label><br>
+<label for="rule2">Rule: </label><input type="text" id="rule2" name="rule2" value="H=240" disabled>
+<br><br>
+<label>Action :</label><br>
+<input type="radio" id="turnON2" name="action2" value="turnON" ><label for="turnON2">turn ON</label><br>
+<input type="radio" id="turnOFF2" name="action2" value="turnOFF" checked><label for="turnOFF2">turn OFF</label><br>
+<br>
+<input type="hidden" id="status2" name="status2" value="disabled">
+<input type="button" id="delete2" value="Delete Rule" onclick="deleteRule()">
+<br><hr><br>
+</div>
+<input id="sub" type="submit" value="Submit" onclick="sendForm()">
+<input type="button" value="Add Rule" onclick="addRule()">
+<script>
+for(i=1;i<=nbRule; i++)
+{
+  activateRule(i);
+}
+</script>
+</form>
+</body>
+</html>
