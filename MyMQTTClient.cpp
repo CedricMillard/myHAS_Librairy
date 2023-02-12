@@ -16,7 +16,7 @@ bool MyMQTTClient::mqttReconnect() {
     // Create a random client ID
     String clientId = ID;
     // Attempt to connect
-    if (pMqttClient->connect(clientId.c_str(), mqttLogin.c_str(), mqttPassword.c_str(), false)) {
+    if (pMqttClient->connect(clientId.c_str(), mqttLogin, mqttPassword, false)) {
 #ifdef _DEBUG_
       Serial.print(clientId);
       Serial.println(" connected");
@@ -87,12 +87,9 @@ bool MyMQTTClient::publishParams()
   return false;
 }
 
-void MyMQTTClient::setMqttServer(String iMqttServer, int iMqttPort, String iMqttLogin, String iMqttPassword)
+void MyMQTTClient::setMqttServer(const char * iMqttServer, int iMqttPort, const char * iMqttLogin, const char * iMqttPassword)
 {
-  char *sMqttIP = (char *) malloc(sizeof(char)*(iMqttServer.length()+1));
-  iMqttServer.toCharArray(sMqttIP,iMqttServer.length()+1);
-  
-  pMqttClient->setServer(sMqttIP, iMqttPort);
+  pMqttClient->setServer(iMqttServer, iMqttPort);
   mqttLogin = iMqttLogin;
   mqttPassword = iMqttPassword;
 }
