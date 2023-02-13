@@ -1,14 +1,13 @@
-/*
-* {
-  "wifiSSID": "123456789123456789123456789",
-  "wifiPWD": "azertyuiopqsdfghjklmwxcvbn123456789",
-  "mqttServer": "192.165.128.128",
-  "mqttPort": 8080,
-  "mqttLogin":"123456789123456789123456789",
-  "mqttPwd":"azertyuiopqsdfghjklmwxcvbn123456789",
-  "otaPwd":"azertyuiopqsdfghjklmwxcvbn123456789"
-}
-*/
+/************************************************
+* Class to manage App settings;
+* wifi SSID
+* wifi PassWord
+* Mqtt Server address
+* Mqtt Port
+* Mqtt user name
+* Mqtt Password
+* OTA Password
+************************************************/
 
 #ifndef Settings_h
 #define Settings_h
@@ -29,31 +28,32 @@ public:
   bool saveSettings();
 
   bool isWifiSetup();
-  String getWifiSSID();
-  String getWifiPWD();
+  const char* getWifiSSID();
+  const char* getWifiPWD();
   
   bool isMqttSetup();
-  String getMqttServer();
   int getMqttPort();
-  String getMqttLogin();
-  String getMqttPWD();
+  const char* getMqttServer();
+  const char* getMqttLogin();
+  const char* getMqttPWD();
 
   bool isOTASettings();
-  String getOTAPWD();
+  const char* getOTAPWD();
   
   String getSettingsHtml();
 
-  void readSettingsFile();
 private:
-  String wifiSSID = "";
-  String wifiPWD = "";
-  String mqttServer = "";
+  void readSettingsFile();
+  
   int mqttPort = 0;
-  String mqttLogin = "";
-  String mqttPwd = "";
-  String otaPWD = "";
   //List of available wifi networks, separated by ';'
   String listWIFInets = "";
+  char *strWifiSSID = NULL;
+  char *strWifiPWD = NULL;
+  char *strMqttServer = NULL;
+  char *strMqttLogin = NULL;
+  char *strMqttPWD = NULL;
+  char *strOtaPWD = NULL;
 };
 
 const char Settings_html[] PROGMEM = R"html(

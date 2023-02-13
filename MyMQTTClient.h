@@ -18,7 +18,7 @@ class MyMQTTClient
    MyMQTTClient(PubSubClient *iMqttClient, String iId);
    void addTopic(String iTopic);
    bool publishMsg(String iTopic, String iMessage, bool iRetained);
-   void setMqttServer(String iMqttServer, int iMqttPort, String iMqttLogin, String iMqttPassword);
+   void setMqttServer(const char * iMqttServer, int iMqttPort, const char * iMqttLogin, const char * iMqttPassword);
    virtual void handleMqttCallback(char* iTopic, byte* payload, unsigned int iLength) = 0;
    virtual bool update(bool iForce = false);
 
@@ -35,8 +35,8 @@ class MyMQTTClient
     Array<String> topicList;
 
   private:
-    String mqttLogin;
-    String mqttPassword;
+    const char * mqttLogin;
+    const char * mqttPassword;
 };
 
 #endif
