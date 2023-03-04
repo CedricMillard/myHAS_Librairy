@@ -57,7 +57,7 @@ const char index_html_switch[] PROGMEM = R"switch(<label class="switch">
   <input id="prise_#ID#_status_h" type="hidden" value="0" name="prise_#ID#_status">
 <em id="#ID#_label" class="big">#NAME#</em>
 <input id="#ID#_name" type="hidden" name="prise_#ID#_name" value="#NAME#" onKeyPress="return noenter()"><input type="button" value="Edit name" onclick="if(this.value=='Edit name'){document.getElementById('#ID#_label').hidden=true; document.getElementById('#ID#_name').disabled = false; document.getElementById('#ID#_name').type='Text';this.value='save'}else{SendForm();}"></input>
-<input type="button" value="#NB_RULES#" onclick="window.location.href = '/rules?ID=#ID#'";} "></input> <em id="#ID#_label2" class="small">(#ID#)</em>
+<input type="button" value="#NB_RULES#" onclick="window.location.href = '/rules?ID=#ID#'"></input> <em id="#ID#_label2" class="small">(#ID#)</em>
 <br><br>)switch";
 
 const char index_html_sensor[] PROGMEM = R"sensor(

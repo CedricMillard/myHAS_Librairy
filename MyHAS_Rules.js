@@ -388,6 +388,7 @@ function updateRule(iIndex=1, iCondNb = 1, checkEvent=true)
     document.getElementById("temp_"+condNb+"_"+index).type = "hidden";
     document.getElementById("tempLabel_"+condNb+"_"+index).style.display = "none";
     document.getElementById("timeRange_"+condNb+"_"+index).style.display = "inline";
+    document.getElementById("CarWTemp_"+condNb+"_"+index).style.display = "none";
   }
   else if(variableType=="Time")
   {
@@ -414,6 +415,7 @@ function updateRule(iIndex=1, iCondNb = 1, checkEvent=true)
     document.getElementById("time_"+condNb+"_"+index).type = "hidden";
     document.getElementById("temp_"+condNb+"_"+index).type = "hidden";
     document.getElementById("tempLabel_"+condNb+"_"+index).style.display = "none";
+    document.getElementById("CarWTemp_"+condNb+"_"+index).style.display = "none";
   }
   else if(variableType=="Temp")
   {
@@ -426,6 +428,7 @@ function updateRule(iIndex=1, iCondNb = 1, checkEvent=true)
     document.getElementById("temp_"+condNb+"_"+index).type = "number";
     document.getElementById("tempLabel_"+condNb+"_"+index).innerHTML = "&deg;C";
     document.getElementById("tempLabel_"+condNb+"_"+index).style.display = "inline";
+    document.getElementById("CarWTemp_"+condNb+"_"+index).style.display = "none";
     if(document.getElementById("operator_"+condNb+"_"+index).value == "eq") document.getElementById("operator_"+condNb+"_"+index).value = "inf";
   }
   else if(variableType=="Tension")
@@ -439,6 +442,7 @@ function updateRule(iIndex=1, iCondNb = 1, checkEvent=true)
     document.getElementById("temp_"+condNb+"_"+index).type = "number";
     document.getElementById("tempLabel_"+condNb+"_"+index).innerHTML = "V";
     document.getElementById("tempLabel_"+condNb+"_"+index).style.display = "inline";
+    document.getElementById("CarWTemp_"+condNb+"_"+index).style.display = "none";
     if(document.getElementById("operator_"+condNb+"_"+index).value == "eq") document.getElementById("operator_"+condNb+"_"+index).value = "inf";
   }
 
