@@ -108,6 +108,7 @@ var nbVisibleRule = #NB_RULES#;
 <form id="FormR" action="/saveRules" method="post">
 <input type="hidden" id="ID" name="ID" value=#ID#>
 <input type="hidden" id="NbRule" name="NbRule" value=#NB_RULES#>
+<input type="hidden" id="output" name="output" value="">
 )rules";
 
 const char rules_html_rule[] PROGMEM = R"rules(
