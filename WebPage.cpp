@@ -158,8 +158,8 @@ String WebPage::getRulesHTML(int iID)
       sRule.replace("#CONDITION#", FPSTR(condition_html_rule));
       sRule.replace("#EXTRA_CONDITIONS#", getExtraConditions());
       sRule.replace("#TEMP_SENSORS#", getCarWSensors());
-      sRule.replace("#I#", String(0));
-      sRule.replace("#J#", String(1));
+      sRule.replace("#I#", String(i+1));
+      sRule.replace("#J#", "1");
       sRule.replace("#H_SELECTED#", "selected");
       sRule.replace("#EQ_SELECTED#", "selected");
       sRule.replace("#INF_SELECTED#", "");
@@ -189,6 +189,8 @@ String WebPage::getRulesHTML(int iID)
     sRule.replace("#RANGE_VISIBLE#", "style='display:none;'");
     sRule.replace("#CARWT_VISIBLE#", "style='display:none;'");
     sRule.replace("#TEMP_SENSORS#", getCarWSensors());
+    sRule.replace("#I#", String(i+1));
+    sRule.replace("#J#", "1");
     
     //action
     if(i>=0)
