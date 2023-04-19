@@ -61,6 +61,7 @@ bool MyMQTTClient::publishMsg(String iTopic, String iMessage, bool iRetained)
 {
   checkMQTTConnection(true);
   pMqttClient->publish(iTopic.c_str(), iMessage.c_str(), iRetained);
+  return true;
 }
 
 bool MyMQTTClient::update(bool iForce)

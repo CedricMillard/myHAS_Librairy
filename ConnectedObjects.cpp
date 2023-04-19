@@ -1,4 +1,5 @@
 #include "ConnectedObjects.h"
+#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 #include <EEPROM.h>
 
@@ -333,6 +334,7 @@ bool PriseIOT::init()
     }
     if(status) turnON(true);
   }
+  return true;
 }
 
 bool PriseIOT::publishParams()
@@ -351,6 +353,7 @@ bool PriseIOT::publishParams()
   bResult &= publishStatus();
 
   bResult &= publishRules();
+  return bResult;
 }
 
 bool PriseIOT_RF433::turnON(bool iForce)
@@ -361,7 +364,7 @@ bool PriseIOT_RF433::turnON(bool iForce)
   if(!status || iForce) SendMessage(plugNumber, NEXA_ON);
   status = true;
   publishStatus();
-  pLog->addLogEntry("TurnON " + String(ID) );
+  pLog->addLogEntry("TurnON " + String(ID));
   return true;
 
 }
@@ -455,6 +458,7 @@ bool Prise::evalRule(String iRule, bool lastEvalResult)
     
     if(sStart.startsWith("Sun"))
     {
+      if(!pEnv->isSunriseSunsetUptodate()) pEnv->updateSunriseSunsetTime();
       if(sStart.startsWith("Sunrise"))
         sTime = pEnv->getSunriseTime();
       else if(sStart.startsWith("Sunset"))
@@ -475,6 +479,7 @@ bool Prise::evalRule(String iRule, bool lastEvalResult)
     String sEnd =  iRule.substring(iRule.lastIndexOf("<")+1);
     if(sEnd.startsWith("Sun"))
     {
+      if(!pEnv->isSunriseSunsetUptodate()) pEnv->updateSunriseSunsetTime();
       if(sEnd.startsWith("Sunrise"))
         eTime = pEnv->getSunriseTime() - 1800;
       else if(sEnd.startsWith("Sunset"))

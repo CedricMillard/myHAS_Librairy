@@ -3,6 +3,7 @@
 #ifndef ESP8266
   #include "SPIFFS.h"
 #endif
+#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 #include <string.h>
 
@@ -75,6 +76,7 @@ bool Settings::saveSettings()
     File SettingsFile = SPIFFS.open(Settings_FILE_PATH, "w");
     SettingsFile.println(SettingsJson);
     SettingsFile.close();
+    return true;
 }
 
 bool Settings::isWifiSetup()

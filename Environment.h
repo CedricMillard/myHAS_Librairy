@@ -52,9 +52,13 @@ class Environment : public MyMQTTClient
     time_t getSunsetTime();
     time_t getSunriseTime();
     void setLog(Logging *iLog){pLog = iLog;}
+    void setLocation(float iLat, float iLong);
+    bool isSunriseSunsetUptodate();
+    void updateSunriseSunsetTime(bool iForce = false);
+
   private:
     bool setRealTime();
-
+    
     unsigned long lastNTPUpdate = 0;
     float TemperatureExt = 100;
     float weatherLat = 59.449062;
@@ -64,6 +68,9 @@ class Environment : public MyMQTTClient
     Array<float> sensorValues;
     Array<String> sensorUnits;
     Logging *pLog = NULL;
+    unsigned long sunsetTime = 0;
+    unsigned long sunriseTime = 0;
+    
 };
 
 String getDateFr();
@@ -79,7 +86,7 @@ long getTimeSec();
 uint8_t getDay();
 
 #if defined(ESP8266)
-bool getLocalTime(struct tm * info, uint32_t ms=5000);
+//bool getLocalTime(struct tm * info, uint32_t ms=5000);
 #endif
 
 #endif
