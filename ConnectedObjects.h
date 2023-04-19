@@ -72,10 +72,11 @@ class Prise : public Objet
 protected:
   bool evalRule(String iRule, bool lastEvalResult = false);
   Logging *pLog = NULL;
+  Environment *pEnv = NULL;
 private:
   //String getOperande(String iString);
   long getCarWarmerStartTime(long iTargetTime, float iTemp);
-  Environment *pEnv = NULL;
+  
 };
 
 class PriseIOT : public Prise, public MyMQTTClient

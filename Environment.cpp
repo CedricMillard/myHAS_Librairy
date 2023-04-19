@@ -5,9 +5,11 @@
 
 #include "Environment.h"
 #include <time.h>
+#include <SunRise.h>
 #if defined(ESP8266)
 #include <TZ.h>
 #endif
+#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 #include <Arduino.h>
 
@@ -86,6 +88,8 @@ bool Environment::update(bool iForce)
   {
     if(!setRealTime()) result = false;
   }
+  
+  updateSunriseSunsetTime(iForce);
 
   return result;
 }
@@ -103,7 +107,7 @@ bool Environment::setRealTime()
   
 
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("Connection to NTP server failed");
 #endif
@@ -117,6 +121,12 @@ bool Environment::setRealTime()
   pLog->addLogEntry("Time updated from NTP");
   lastNTPUpdate = millis();
   return true;
+}
+
+void Environment::setLocation(float iLat, float iLong)
+{
+  weatherLat = iLat;
+  weatherLong = iLong;
 }
 
 float Environment::getTemperatureExtFromWeather()
@@ -247,14 +257,61 @@ Weather Environment::getWeatherHour(long hour)
   return  weather_h[index];
 }
 
+bool Environment::isSunriseSunsetUptodate()
+{
+  //Time in UTC
+  time_t t = time (nullptr);
+  tm * srTM_midnight = localtime(&t);
+  srTM_midnight->tm_hour = 0;
+  srTM_midnight->tm_min = 0;
+  srTM_midnight->tm_sec = 0;
+
+  time_t t_midnight = mktime(srTM_midnight);
+  return difftime(getSunriseTime(), t_midnight) > 0;
+}
+
+void Environment::updateSunriseSunsetTime(bool iForce)
+{
+  //Time in UTC
+  time_t t = time (nullptr);
+  
+  if(!isSunriseSunsetUptodate() || iForce)
+  {
+    pLog->addLogEntry("Update Sunrise and Sunset time");
+    tm * srTM = localtime(&t);
+    
+    //Calculate local epoch time
+  #if defined(ESP8266)
+    time_t gmtT = mktime(gmtime(&t));
+    if(srTM->tm_isdst) gmtT-=3600;
+    time_t t2 = t + t - gmtT;
+  #else
+    setenv("TZ", "GMT0",1);
+    time_t t2 = mktime(srTM);
+    setenv("TZ", "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00", 1);
+  #endif
+    
+    //local epoch time at midnight
+    time_t t0 = t2 / (24*3600);
+    
+    //local epoch time at noon
+    t2 = t2 - t2%(24*3600) + 12*3600;
+
+    SunRise sr;
+    sr.calculate(weatherLat, weatherLong, t2);
+    sunsetTime = sr.setTime;
+    sunriseTime = sr.riseTime;
+  }
+}
+
 time_t Environment::getSunsetTime()
 {
-  return getTodayWeather().Sunset;
+  return sunsetTime;
 }
 
 time_t Environment::getSunriseTime()
 {
-  return getTodayWeather().Sunrise;
+  return sunriseTime;
 }
 
 String getWeekNumber()
@@ -262,7 +319,7 @@ String getWeekNumber()
   String out = "W";
   struct tm timeinfo;
   char sTime[5];
-   if(!getLocalTime(&timeinfo)){
+   if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -278,7 +335,7 @@ String getTimeFr()
   String out;
   struct tm timeinfo;
   char sTime[10];
-   if(!getLocalTime(&timeinfo)){
+   if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -293,7 +350,7 @@ long getTimeSec()
 {
   long out = -1;
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -309,7 +366,7 @@ String getDateFr()
   String out;
   struct tm timeinfo;
   char sTime[20];
-   if(!getLocalTime(&timeinfo)){
+   if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -325,7 +382,7 @@ String getDateShort()
   String out;
   struct tm timeinfo;
   char sTime[6];
-   if(!getLocalTime(&timeinfo)){
+   if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -341,7 +398,7 @@ uint8_t getDay()
   uint8_t day;
   struct tm timeinfo;
   char sTime[2];
-   if(!getLocalTime(&timeinfo)){
+   if(!getLocalTime(&timeinfo,5000U)){
 #ifdef _DEBUG_
   Serial.println("RealTime not set");
 #endif
@@ -371,7 +428,7 @@ bool operator!=(const Weather& lhs, const Weather& rhs)
 }
 
 #if defined(ESP8266)
-bool getLocalTime(struct tm * info, uint32_t ms)
+/*bool getLocalTime(struct tm * info, uint32_t ms=5000U)
 {
     uint32_t start = millis();
     time_t now;
@@ -384,5 +441,5 @@ bool getLocalTime(struct tm * info, uint32_t ms)
         delay(10);
     }
     return false;
-}
+}*/
 #endif
