@@ -9,12 +9,17 @@
 #include "Environment.h"
 #include "Logging.h"
 
+#define INDEX_FILE_PATH "/index.html"
+#define RULES_FILE_PATH "/rules.html"
+
 class WebPage
 {
 public:
   WebPage(){}
   String getIndexHTML();
+  String getIndexHTML_file();
   String getRulesHTML(int iID);
+  String getRulesHTML_file(int iID);
   void setEnv(Environment *iEnv) {pEnv = iEnv;}
   void setTitle(String iTitle){sTitle = iTitle;}
   void setLog(Logging *iLog){pLog = iLog;}

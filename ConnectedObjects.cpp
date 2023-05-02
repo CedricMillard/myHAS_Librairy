@@ -256,6 +256,7 @@ void PriseIOT::handleMqttCallback(char* iTopic, byte* payload, unsigned int iLen
       free(tempString);
 
       //Parse rules coded in Json format to feed rule list
+      pLog->addLogEntry("Rules have been updated");
       jsonToRules(iRules);
 
       //Republish to save rules for next restart and for web
@@ -637,7 +638,7 @@ void Prise::jsonToRules(String iJson)
     currentRule.active = myRule["active"];
     aRules.add(currentRule);
   }
-  pLog->addLogEntry("Rules have been updated");
+  //pLog->addLogEntry("Rules have been updated");
 }
 
 int Prise::getNbActiveRules()

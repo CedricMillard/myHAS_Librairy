@@ -153,15 +153,12 @@ void Environment::setSensorValue(int iSensorId, float iValue)
 
 void Environment::setWeatherDaily(String iWeatherJson)
 {
-  const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_OBJECT_SIZE(2) + 4*JSON_OBJECT_SIZE(7)+200;
-  DynamicJsonDocument doc(capacity);
-DeserializationError toto;
-  if(deserializeJson(doc, iWeatherJson)!=DeserializationError::Ok)
-    Serial.printf("\nERROR ERROR ERROR DeserializationError %d\n%s\n\n", deserializeJson(doc, iWeatherJson), iWeatherJson.c_str());
+  DynamicJsonDocument doc(1024);
+  DeserializationError err = deserializeJson(doc, iWeatherJson);
+  if(err!=DeserializationError::Ok)
+    Serial.printf("\nERROR ERROR ERROR DeserializationError %s %d\n%s\n\n", err.c_str(), doc.capacity(), iWeatherJson.c_str());
 
   JsonArray daily = doc["daily"];
-
-  long updated = doc["updated"];
 
   for(int i=0; i<4; i++)
   {
@@ -170,30 +167,27 @@ DeserializationError toto;
     weather_d[i].Tmax = (float)currentDay["Tmax"];
     weather_d[i].Tmin = (float)currentDay["Tmin"];
     weather_d[i].Wind = (float)currentDay["wind"];
-    weather_d[i].Moon = (float)currentDay["moon"];
-    weather_d[i].Sunrise = (unsigned long)currentDay["sunrise"];
-    weather_d[i].Sunset = (unsigned long)currentDay["sunset"];
-    weather_d[i].updateTime = updated;
+    weather_d[i].T6 = (float)currentDay["T6"];
+    weather_d[i].updateTime = (long)currentDay["time"];
   }
 }
 
 void Environment::setWeatherHourly(String iWeatherJson)
 {
-  const size_t capacity = JSON_ARRAY_SIZE(14) + JSON_OBJECT_SIZE(2) + 14*JSON_OBJECT_SIZE(7)+500;
-  DynamicJsonDocument doc(capacity);
-  
-  if(deserializeJson(doc, iWeatherJson)!=DeserializationError::Ok)
-    Serial.printf("\nERROR ERROR ERROR DeserializationError %d\n%s\n\n", deserializeJson(doc, iWeatherJson), iWeatherJson.c_str());
+  DynamicJsonDocument doc(4096);
+  DeserializationError err = deserializeJson(doc, iWeatherJson);
+  if(err!=DeserializationError::Ok)
+    Serial.printf("\nERROR ERROR ERROR DeserializationError %s %d\n%s\n\n", err.c_str(), doc.capacity(), iWeatherJson.c_str());
 
   JsonArray hourly = doc["hourly"];
 
-  for(int i=0; i<14; i++)
+  for(int i=0; i<24; i++)
   {
     JsonObject currentHour = hourly[i];
     weather_h[i].Weather = (short) currentHour["weather"];
     weather_h[i].Tmax = weather_h[i].Tmin = (float)currentHour["Temp"];
     weather_h[i].Wind = (float)currentHour["wind"];
-    weather_h[i].updateTime = currentHour["time"];
+    weather_h[i].updateTime = (long)currentHour["time"];
   }
 }
 
@@ -249,8 +243,9 @@ Weather Environment::getWeatherHour(long hour)
   //Compute time index
   int index = (hour - weather_h[0].updateTime)/3600;
 
-  if (index<0 || index > 13)
+  if (index<0 || index > 23)
   {
+    Serial.println("ERROR: Cannot find hourly weather index="+String(index) + " timestamp="+String(hour) + " weatherH1="+String(weather_h[0].updateTime));
     return emptyWeather;
   }
 
@@ -409,17 +404,29 @@ uint8_t getDay()
   return day;
 }
 
+time_t timegm(tm * tm) {
+  time_t tStampBadLocaltime = mktime(tm);
+
+  struct tm tmUTC;
+  struct tm tmLocaltime;
+  gmtime_r(&tStampBadLocaltime, &tmUTC);
+  localtime_r(&tStampBadLocaltime, &tmLocaltime);
+  time_t tstampBadUTC = mktime(&tmUTC);
+  time_t tstampLocaltime = mktime(&tmLocaltime);
+  time_t tLocalOffset = tstampLocaltime - tstampBadUTC;
+  return tStampBadLocaltime + tLocalOffset;
+}
 
 bool operator==(const Weather& lhs, const Weather& rhs)
 {
-    bool result = true;
-    if(lhs.Tmax!=rhs.Tmax) result = false;
-    if(lhs.Tmin!=rhs.Tmin) result = false;
-    if(lhs.Weather!=rhs.Weather) result = false;
-    if(lhs.Wind!=rhs.Wind) result = false;
-    if(lhs.Moon!=rhs.Moon) result = false;
+    if(lhs.Tmax!=rhs.Tmax) return false;
+    if(lhs.Tmin!=rhs.Tmin) return false;
+    if(lhs.T6!=rhs.T6) return false;
+    if(lhs.Weather!=rhs.Weather) return false;
+    if(lhs.Wind!=rhs.Wind) return false;
+    //if(lhs.Moon!=rhs.Moon) return false;
 
-    return result;
+    return true;
 }
 
 bool operator!=(const Weather& lhs, const Weather& rhs)

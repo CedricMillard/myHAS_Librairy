@@ -1,4 +1,8 @@
 #include "WebPage.h"
+#include "FS.h"
+#ifndef ESP8266
+  #include "SPIFFS.h"
+#endif
 
 String WebPage::getIndexHTML()
 {
@@ -98,6 +102,117 @@ String WebPage::getIndexHTML()
 
   htmlPage+=FPSTR(index_html_footer);
   return htmlPage;
+}
+
+String WebPage::getIndexHTML_file()
+{
+#ifdef ESP8266
+  bool result = SPIFFS.begin();
+#else
+  bool result = SPIFFS.begin(true);
+#endif
+
+  if(!result) return "";
+
+  File htmlFile = SPIFFS.open(INDEX_FILE_PATH, "w");
+  
+  String htmlPage = FPSTR(checkbox_style);
+  htmlPage +=FPSTR(index_html);
+  htmlPage.replace("#TITLE#", sTitle);
+  htmlPage.replace("#TIME#", getTimeFr());
+  htmlPage.replace("#DATE#", getDateFr());
+  htmlFile.println(htmlPage);
+  for(int i = 0; i<aPrises.size();i++)
+  {
+    String Prise = FPSTR(index_html_switch);
+    if(aPrises[i]->status) Prise.replace("#STATUS#", "checked");
+    else Prise.replace("#STATUS#", "");
+    Prise.replace("#NAME#", aPrises[i]->name);
+    Prise.replace("#ID#", String(aPrises[i]->Id));
+    int nbActiveRules = aPrises[i]->getNbActiveRules();
+    int nbRules = aPrises[i]->aRules.size();
+    String ruleLabel = String(nbActiveRules)+"/"+String(nbRules)+" Rules";
+    if(nbRules ==0) ruleLabel = "No Rules";
+    Prise.replace("#NB_RULES#",ruleLabel);
+    htmlFile.println(Prise);
+  }
+  
+  if(aSensors.size())
+    htmlFile.println("<hr>");
+
+  for(int i = 0; i<aSensors.size();i++)
+  {
+    String Sensor =FPSTR(index_html_sensor);
+    Sensor.replace("#NAME#", aSensors[i]->name);
+    Sensor.replace("#ID#", String(aSensors[i]->Id));
+    if(pEnv)
+      Sensor.replace("#SENSOR_VALUE#", String(pEnv->getSensorValue(aSensors[i]->Id))+pEnv->getSensorUnit(aSensors[i]->Id));
+    else
+      Sensor.replace("#SENSOR_VALUE#", "");
+
+    Sensor.replace("*", "&deg;");
+    switch(aSensors[i]->sType)
+    {
+      case temp: Sensor.replace("#BTN_VISIBLE#", ""); htmlFile.println(temp_icon); break;
+      case tension: Sensor.replace("#BTN_VISIBLE#", ""); htmlFile.println(bat_icon); break;
+      case temp_ro: Sensor.replace("#BTN_VISIBLE#", "disabled"); htmlFile.println(temp_icon); break;
+      default: Sensor.replace("#BTN_VISIBLE#", ""); htmlFile.println(temp_icon); break;
+    }
+    htmlFile.println(Sensor);
+  }
+
+  if(aDisplays.size())
+    htmlFile.println("<hr>");
+
+  for(int j=0; j<aDisplays.size();j++)
+  {
+    String sSensorOptionsL= "";
+    String sSensorOptionsR= "";
+
+    for(int i = 0; i<aSensors.size();i++)
+    {
+      String sO(FPSTR(weather_option));
+
+      //<option value="#SENSOR_ID#" #_SELECTED_#>#SENSOR_NAME#</option>
+      String sensorId = String(aSensors[i]->Id);
+      sO.replace("#SENSOR_ID#", sensorId);
+      sO.replace("#SENSOR_NAME#", aSensors[i]->name);
+      sSensorOptionsL+=sO;
+      sSensorOptionsR += sO;
+
+      if(aDisplays[j]->leftInfo==sensorId) sSensorOptionsL.replace("#_SELECTED_#", "selected");
+      else sSensorOptionsL.replace("#_SELECTED_#", "");
+
+      if(aDisplays[j]->rightInfo==sensorId) sSensorOptionsR.replace("#_SELECTED_#", "selected");
+      else sSensorOptionsR.replace("#_SELECTED_#", "");
+
+    }
+
+    String sWeatherDisp = weatherSta_icon + String(FPSTR(index_html_weatherDisp));
+    sWeatherDisp.replace("#ID#", String(aDisplays[j]->Id));
+    sWeatherDisp.replace("#NAME#", String(aDisplays[j]->name));
+    sWeatherDisp.replace("#SENSOR_LIST_L#",sSensorOptionsL);
+    sWeatherDisp.replace("#SENSOR_LIST_R#",sSensorOptionsR);
+    if(aDisplays[j]->leftInfo=="Weather3") sWeatherDisp.replace("#W_SELECTED_L#","selected");
+    else sWeatherDisp.replace("#W_SELECTED_L#","");
+    if(aDisplays[j]->rightInfo=="Weather3") sWeatherDisp.replace("#W_SELECTED_R#","selected");
+    else sWeatherDisp.replace("#W_SELECTED_R#","");
+    if(aDisplays[j]->layout==1) sWeatherDisp.replace("#W_SELECTED_LAYOUT1#","selected");
+    if(aDisplays[j]->layout==2) sWeatherDisp.replace("#W_SELECTED_LAYOUT2#","selected");
+    if(aDisplays[j]->layout==3) sWeatherDisp.replace("#W_SELECTED_LAYOUT3#","selected");
+    sWeatherDisp.replace("#W_SELECTED_LAYOUT1#","");
+    sWeatherDisp.replace("#W_SELECTED_LAYOUT2#","");
+    sWeatherDisp.replace("#W_SELECTED_LAYOUT3#","");
+
+    htmlFile.println(sWeatherDisp);
+  }
+  
+  htmlFile.println("<hr>");
+  htmlFile.println(pLog->getLogHTML());
+  htmlFile.println(FPSTR(index_html_footer));
+  htmlFile.close();
+
+  return INDEX_FILE_PATH;
 }
 
 String WebPage::getRulesHTML(int iID)
@@ -227,6 +342,148 @@ String WebPage::getRulesHTML(int iID)
 
   htmlPage+=FPSTR(rules_html_footer);
   return htmlPage;
+}
+
+String WebPage::getRulesHTML_file(int iID)
+{
+  #ifdef ESP8266
+  bool result = SPIFFS.begin();
+#else
+  bool result = SPIFFS.begin(true);
+#endif
+
+  if(!result) return "";
+
+  File htmlFile = SPIFFS.open(RULES_FILE_PATH, "w");
+
+  String htmlPage = FPSTR(checkbox_style);
+  htmlPage += FPSTR(rules_html_header);
+
+  htmlPage.replace("#ID#", String(iID));
+  //Retrieve rules
+  Prise *pPrise = aPrises.getItem(iID);
+  int iNbRules = pPrise->aRules.size();
+  htmlPage.replace("#NB_RULES#", String(iNbRules));
+  htmlPage.replace("#PRISE_NAME#",pPrise->name);
+  for(int i = -1; i<iNbRules;i++)
+  {
+    String sRule = FPSTR(rules_html_rule);
+    sRule.replace("#I#", String(i+1));
+    //frequency
+    Rule *pCurrentRule = NULL;
+
+    if(i>=0)
+    {
+      pCurrentRule = &(pPrise->aRules[i]);
+      uint8_t freq = pCurrentRule->frequency; //pPrise->aRules[i].frequency;
+      if(freq & 1) sRule.replace("#SUN_CHECKED#", "checked");
+      if(freq & 2) sRule.replace("#MON_CHECKED#", "checked");
+      if(freq & 4) sRule.replace("#TUE_CHECKED#", "checked");
+      if(freq & 8) sRule.replace("#WED_CHECKED#", "checked");
+      if(freq & 16) sRule.replace("#THU_CHECKED#", "checked");
+      if(freq & 32) sRule.replace("#FRI_CHECKED#", "checked");
+      if(freq & 64) sRule.replace("#SAT_CHECKED#", "checked");
+      sRule.replace("#FREQ#", String(freq));
+    }
+    sRule.replace("#SUN_CHECKED#", "");
+    sRule.replace("#MON_CHECKED#", "");
+    sRule.replace("#TUE_CHECKED#", "");
+    sRule.replace("#WED_CHECKED#", "");
+    sRule.replace("#THU_CHECKED#", "");
+    sRule.replace("#FRI_CHECKED#", "");
+    sRule.replace("#SAT_CHECKED#", "");
+    sRule.replace("#FREQ#", "0");
+
+    //condition
+    if(i>=0)
+    {
+      int j = 0;
+      String sCondHTML;
+      String sCond = pCurrentRule->condition;//pPrise->aRules[i].condition;
+      sRule.replace("#RULE#", sCond);
+      sRule.replace("#FORM_VISIBLE#", "");
+      CreateCondition(sCondHTML, sCond, j);
+      sRule.replace("#CONDITION#", sCondHTML);
+      sRule.replace("#I#", String(i+1));
+      sRule.replace("#NB_COND#", String(j));
+    }
+    else
+    {
+      sRule.replace("#CONDITION#", FPSTR(condition_html_rule));
+      sRule.replace("#EXTRA_CONDITIONS#", getExtraConditions());
+      sRule.replace("#TEMP_SENSORS#", getCarWSensors());
+      sRule.replace("#I#", String(i+1));
+      sRule.replace("#J#", "1");
+      sRule.replace("#H_SELECTED#", "selected");
+      sRule.replace("#EQ_SELECTED#", "selected");
+      sRule.replace("#INF_SELECTED#", "");
+      sRule.replace("#SUP_SELECTED#", "");
+      sRule.replace("#TIME_TYPE#", "time");
+      sRule.replace("#TIME#", getTimeFr());
+      sRule.replace("#RULE#", "H="+String(getTimeSec()));
+      sRule.replace("#NB_COND#", String(1));
+    }
+    //Remove all not already replaced tags
+    sRule.replace("#TE_SELECTED#", "");
+    sRule.replace("#H_SELECTED#", "");
+    sRule.replace("#TM_SELECTED#", "");
+    sRule.replace("#CARW_SELECTED#", "");
+    sRule.replace("#EQ_SELECTED#", "");
+    sRule.replace("#SUP_SELECTED#", "");
+    sRule.replace("#INF_SELECTED#", "");
+    sRule.replace("#TIME#", "");
+    sRule.replace("#TEMP#", "");
+    sRule.replace("#START_TIME#", "0");
+    sRule.replace("#END_TIME#", "288");
+    sRule.replace("#T_LABEL_STYLE#", "style='display:none;'");
+    sRule.replace("#TIME_TYPE#", "hidden");
+    sRule.replace("#NUMBER_TYPE#", "hidden");
+    sRule.replace("#OP_VISIBLE#", "style='display:none;'");
+    sRule.replace("#FORM_VISIBLE#", "style='display:none;'");
+    sRule.replace("#RANGE_VISIBLE#", "style='display:none;'");
+    sRule.replace("#CARWT_VISIBLE#", "style='display:none;'");
+    sRule.replace("#TEMP_SENSORS#", getCarWSensors());
+    sRule.replace("#I#", String(i+1));
+    sRule.replace("#J#", "1");
+    
+    //action
+    if(i>=0)
+    {
+      switch( pCurrentRule->action/*pPrise->aRules[i].action*/)
+      {
+        case turnOn: sRule.replace("#ON_CHECKED#", "checked");break;
+        //case turnOff: sRule.replace("#OFF_CHECKED#", "checked");break;
+        case blink: sRule.replace("#BLINK_CHECKED#", "checked");break;
+      }
+    }
+    else sRule.replace("#ON_CHECKED#", "checked");
+    sRule.replace("#ON_CHECKED#", "");
+    sRule.replace("#BLINK_CHECKED#", "");
+
+    // Active
+    if(i>=0)
+    {
+      if(!pCurrentRule->active/*pPrise->aRules[i].active*/)
+      {
+        sRule.replace("#STATUS_CHECKED#", "");
+        sRule.replace("#STATUS#", "disabled");
+      }
+    }
+    sRule.replace("#STATUS_CHECKED#", "checked");
+    sRule.replace("#STATUS#", "active");
+
+    htmlPage+=sRule;
+  }
+  if(pPrise->type == priseWifi)
+    htmlPage.replace("#BLINK_ENABLED#", "");
+  else
+    htmlPage.replace("#BLINK_ENABLED#", "style='display:none;'");
+  
+  htmlFile.println(htmlPage);
+  htmlFile.println(FPSTR(rules_html_footer));
+  htmlFile.close();
+
+  return RULES_FILE_PATH;
 }
 
 void WebPage::CreateCondition(String &ioHTML, String iCondition, int& j)
