@@ -20,12 +20,13 @@ struct Weather
 {
   float Tmax = -255;
   float Tmin = -255;
+  float T6 = -255;
   short Weather = 0;
   float Wind = -255;
-  float Moon = -255;
+//  float Moon = -255;
   time_t updateTime = 0;
-  time_t Sunrise = 0;
-  time_t Sunset = 0;
+//  time_t Sunrise = 0;
+//  time_t Sunset = 0;
 };
 
 bool operator==(const Weather& lhs, const Weather& rhs);
@@ -64,7 +65,7 @@ class Environment : public MyMQTTClient
     float weatherLat = 59.449062;
     float weatherLong = 16.332060;
     Weather weather_d[4];
-    Weather weather_h[14];
+    Weather weather_h[24];
     Array<float> sensorValues;
     Array<String> sensorUnits;
     Logging *pLog = NULL;
@@ -84,6 +85,8 @@ String getTimeFr();
 long getTimeSec();
 
 uint8_t getDay();
+
+time_t timegm(tm * tm);
 
 #if defined(ESP8266)
 //bool getLocalTime(struct tm * info, uint32_t ms=5000);
