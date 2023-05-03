@@ -365,6 +365,9 @@ String WebPage::getRulesHTML_file(int iID)
   int iNbRules = pPrise->aRules.size();
   htmlPage.replace("#NB_RULES#", String(iNbRules));
   htmlPage.replace("#PRISE_NAME#",pPrise->name);
+  
+  htmlFile.println(htmlPage);
+
   for(int i = -1; i<iNbRules;i++)
   {
     String sRule = FPSTR(rules_html_rule);
@@ -471,15 +474,14 @@ String WebPage::getRulesHTML_file(int iID)
     }
     sRule.replace("#STATUS_CHECKED#", "checked");
     sRule.replace("#STATUS#", "active");
+    if(pPrise->type == priseWifi)
+      sRule.replace("#BLINK_ENABLED#", "");
+    else
+      sRule.replace("#BLINK_ENABLED#", "style='display:none;'");
 
-    htmlPage+=sRule;
+    htmlFile.println(sRule);
   }
-  if(pPrise->type == priseWifi)
-    htmlPage.replace("#BLINK_ENABLED#", "");
-  else
-    htmlPage.replace("#BLINK_ENABLED#", "style='display:none;'");
-  
-  htmlFile.println(htmlPage);
+    
   htmlFile.println(FPSTR(rules_html_footer));
   htmlFile.close();
 
