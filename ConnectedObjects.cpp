@@ -157,6 +157,7 @@ bool PriseIOT::blink()
 
 bool PriseIOT::stopBlink()
 {
+  bBlink = false;
   return false;
 }
 
@@ -189,7 +190,7 @@ bool PriseIOT::update(bool iForce)
         switch(aRules[i].action)
         {
           case turnOn: turnOFF(); break;
-          case Action::blink: bBlink = false; stopBlink(); 
+          case Action::blink: stopBlink(); 
           break;
         }
         if(aRules[i].frequency==128)
@@ -263,7 +264,6 @@ void PriseIOT::handleMqttCallback(char* iTopic, byte* payload, unsigned int iLen
       publishRules();
 
       //Stop blink as it will restart if new rule requires it (otherwise no way to stop blinking)
-      bBlink = false;
       stopBlink();
     }
   }
@@ -427,6 +427,7 @@ bool PriseIOT_ESP::blink()
 
 bool PriseIOT_ESP::stopBlink()
 {
+  bBlink = false;
   digitalWrite(LED_BUILTIN, HIGH);
   pLog->addLogEntry("STOP BLINK");
   return true;
